@@ -19,88 +19,11 @@ import sys, os
 argv = sys.argv
 argc = len(argv)
 
-#import braf.table as table
+from braf import *
 
-memory = {}
 
-regs = {}
-
-BITS = 4
-
-class BIN(list):
-
-    def __init__(self, buffer, bits=BITS, dtype=int):
-        self.bits = bits
-
-        int_buffer = None
-
-        if dtype is int:
-            int_buffer = buffer
-        elif dtype is oct:
-            int_buffer = int(buffer, 8)
-        elif dtype is hex:
-            int_buffer = int(buffer, 16)
-        elif dtype is str:
-            int_buffer = int(buffer, 2)
-        elif dtype is BIN:
-            pass
-        else:
-            raise TypeError("Invalid Data Type {}.".format(dtype))
-
-        if int_buffer is not None:
-            buffer = BIN.int_to_bin(int_buffer, bits)
-
-        list.__init__(self, buffer)
-
-        self.overflow = (self.int > pow(2, self.bits))
-
-    def __getitem__(self, i):
-        return list.__getitem__(list(reversed(self)), i)
-
-    def __str__(self):
-        return "".join(map(str, self))
-
-    def __repr__(self):
-        return "".join(map(str, self))        
-
-    @staticmethod
-    def int_to_bin(buffer, bits):
-        return map(int, bin(buffer)[2:].zfill(bits))
-
-    @staticmethod
-    def flags(buffer, bits):
-        
-        # zero
-        z = (buffer.int == 0)
-        
-        #negative
-        n = (buffer.int < 0)
-
-        #carry
-        c = (buffer.bits > bits and buffer[bits + 1] == 1)
-
-        #overflow
-        v = (c and buffer[-1] == 1)
-
-        return z, n, c, v                    
-
-    def __add__(a, b):
-        assert a.bits == b.bits
-
-        c = BIN(a.int + b.int, a.bits, dtype=int)
-
-        return c, BIN.flags(c, a.bits)
-
-    def __mul__(a, b):
-        assert a.bits == b.bits
-
-        c =  BIN(a.int * b.int, a.bits + b.bits, dtype=int)
-
-        return c, BIN.flags(c, a.bits + b.bits)
-
-    @property
-    def int(self):
-        return sum([self[j] * pow(2, j) for j in range(self.bits)])
+def is_assembly(cmd):
+    return any(x not in {0,1} for x in cmd)
 
 def shell(*args, **kwargs):
 
@@ -111,6 +34,9 @@ def shell(*args, **kwargs):
             if not code: continue
 
             cmd, *args = map((lambda x : BIN(x, BITS, str)), code.split(" "))
+
+            if cmd.int in OP_TABLE:
+                OP_TABLE[cmd.int](*args)
 
             print("cmd:", cmd, "\nargs:", args)
 
