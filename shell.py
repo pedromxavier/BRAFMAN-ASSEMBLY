@@ -22,25 +22,40 @@ argc = len(argv)
 from braf import *
 
 
-def is_assembly(cmd):
-    return any(x not in {0,1} for x in cmd)
-
-def shell(*args, **kwargs):
-
+def get_value(code):
+    
+    
+def shell_loop(*args, **kwargs):
     try:
-        while True:
-            code = input(":: ").strip()
+        code = input(":: ").strip()
 
-            if not code: continue
+        if not code: return 0
 
-            cmd, *args = map((lambda x : BIN(x, BITS, str)), code.split(" "))
+        cmd, *args = code.split(" ")
+        
+        if is_assembly(cmd): 
+            op = OP_TABLE[cmd]
+            args = list(map(int, args))
+            
+        else:
+            cmd = BIN(cmd, BITS, str)
+            op = OP_TABLE[cmd.int]
+            args = list(map((lambda x : BIN(x, BITS, str)), args))
 
-            if cmd.int in OP_TABLE:
-                OP_TABLE[cmd.int](*args)
-
-            print("cmd:", cmd, "\nargs:", args)
+        print("cmd:", cmd, "\nargs:", args)
 
     except KeyboardInterrupt:
+        return 1
+        
+    except Error as e:
+        print(e)
+    
+    return 0
+
+def shell(*args, **kwargs):
+    while not shell_loop(*args, **kwargs):
+        continue
+    else:
         return 0
 
 def main(argc, argv):

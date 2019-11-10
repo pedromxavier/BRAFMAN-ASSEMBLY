@@ -2,12 +2,53 @@
 # -*- coding: utf-8 -*-
 """
 """
+import sys
+import random
+
+from bin import BIN
+
+from error import Error
+
+argv = sys.argv
+argc = len(argv)
+
+SIZE = 32
+BITS = 4
+REGS = 32
+
+class Memory(list):
+    
+    def __init__(self, size, bits):
+        list.__init__(self, [BIN(bits=bits) for _ in range(size)])
+        
+    def __getitem__(self, key):
+        try:
+            list.__getitem__(self, key)
+        except IndexError:
+            msg = "No memory address {} [{}]".format(key,bin(key))
+            raise Error(msg)
+        
+class Reg(list):
+    
+    def __init__(self, regs, bits):
+        list.__init__(self, [BIN(bits=bits) for _ in range(regs)])
+        
+        
+    def __getitem__(self, key):
+        try:
+            list.__getitem__(self, key)
+        except IndexError:
+            msg = "No register in position {} [{}]".format(key,bin(key))
+            raise Error(msg)
+             
+        
+        
 
 OP_TABLE = {}
 
-MEMORY = {}
+MEMORY = Memory(SIZE, BITS)
 
-REG = {}
+REG = Reg(REGS, BITS)
 
 def cmd(f, at=None):
         """
@@ -23,109 +64,86 @@ def cmd(f, at=None):
 
 def cmd_at(at):
     return lambda f : cmd(f, at)
+    
+    
+    
+## OPS
 
-@cmd_at(0b0000)
-def NO_OP():
+@cmd_at(0b000000)
+def NOP():
     pass
 
-@cmd_at(0b0001)
+@cmd_at(0b000010)
+def NOT():
+    pass
+
+@cmd_at(0b000100)
+def LSH():
+    pass
+
+@cmd_at(0b000110)
+def RSH():
+    pass
+    
+@cmd_at(0b001000)
+def LRT():
+    pass
+
+@cmd_at(0b001010)
+def RRT():
+    pass
+
+@cmd_at(0b010000)
 def ADD(A, B, C):
     global REG
     REG[A] = REG[B] + REG[C]
+    
+@cmd_at(0b010001)
+def ADI(A, B, C):
+    global REG
+    REG[A] = REG[B] + C
 
-@cmd_at(0b0010)
+@cmd_at(0b010010)
 def SUB(A, B, C):
     global REG
-    REG[A] = REG[B] - REG[C]    
+    REG[A] = REG[B] - REG[C]
 
-@cmd_at(0b0011)
-def MUL(A, B, C):
+@cmd_at(0b010011)
+def SBI(A, B, C):
     global REG
-    REG[A] = REG[B] * REG[C]
+    REG[A] = REG[B] - C
 
-BITS = 4
+@cmd_at(0b010100)
+def AND(A, B, C):
+    global REG
+    REG[A] = REG[B] & REG[C]
+    
+@cmd_at(0b010101)
+def ANI(A, B, C):
+    global REG
+    REG[A] = REG[B] & C
+    
+@cmd_at(0b010110)
+def OR(A, B, C):
+    global REG
+    REG[A] = REG[B] | REG[C]
+    
+@cmd_at(0b010111)
+def ORI(A, B, C):
+    global REG
+    REG[A] = REG[B] | C
+    
+@cmd_at(0b011000)
+def XOR(A, B, C):
+    global REG
+    REG[A] = REG[B] ^ REG[C]
+    
+@cmd_at(0b011001)
+def XRI(A, B, C):
+    global REG
+    REG[A] = REG[B] ^ C
 
-class BIN(list):
 
-    def __init__(self, buffer, bits=BITS, dtype=int):
-        self.bits = bits
 
-        int_buffer = None
-
-        if dtype is int:
-            int_buffer = buffer
-        elif dtype is oct:
-            int_buffer = int(buffer, 8)
-        elif dtype is hex:
-            int_buffer = int(buffer, 16)
-        elif dtype is str:
-            int_buffer = int(buffer, 2)
-        elif dtype is BIN:
-            pass
-        else:
-            raise TypeError("Invalid Data Type {}.".format(dtype))
-
-        if int_buffer is not None:
-            buffer = BIN.int_to_bin(int_buffer, bits)
-
-        list.__init__(self, buffer)
-
-        self.overflow = (self.int > pow(2, self.bits))
-
-    def __getitem__(self, i):
-        return list.__getitem__(list(reversed(self)), i)
-
-    def __hash__(self):
-        return self.int
-
-    def __str__(self):
-        return "".join(map(str, self))
-
-    def __repr__(self):
-        return "".join(map(str, self))        
-
-    @staticmethod
-    def int_to_bin(buffer, bits):
-        return map(int, bin(buffer)[2:].zfill(bits))
-
-    @staticmethod
-    def flags(buffer, bits):
         
-        # zero
-        z = (buffer.int == 0)
         
-        #negative
-        n = (buffer.int < 0)
-
-        #carry
-        c = (buffer.bits > bits and buffer[bits + 1] == 1)
-
-        #overflow
-        v = (c and buffer[-1] == 1)
-
-        return z, n, c, v                    
-
-    def __add__(a, b):
-        assert a.bits == b.bits
-
-        c = BIN(a.int + b.int, a.bits, dtype=int)
-
-        return c, BIN.flags(c, a.bits)
-
-    def __mul__(a, b):
-        assert a.bits == b.bits
-
-        c =  BIN(a.int * b.int, a.bits + b.bits, dtype=int)
-
-        return c, BIN.flags(c, a.bits + b.bits)
-
-    def __sub__(a, b):
-        assert a.bits == b.bits
-
-        c = BIN(a.int - b.int, a.bits, dtype=int)
-
-        return c, BIN.flags(c, a.bits)
-
-    @property
-    def int(self):
-        return sum([self[j] * pow(2, j) for j in range(self.bits)])
