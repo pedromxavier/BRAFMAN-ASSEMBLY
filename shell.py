@@ -15,28 +15,35 @@ argc = len(argv)
 
 from braf import *
 
+def get_cmd(cmd):
+    if cmd.endswith("H"):
+        cmd_key = int(cmd[:-1], 16)
+    if
 
-def get_value(code):
+    if cmd_key not in OP_TABLE:
+        raise NameError("Invalid OP {}".format(cmd))
+    else:
+        return OP_TABLE[cmd_key]
 
+def get_arg(arg):
+    ...
+
+def exec_cmd(op, args):
+    return op(*args)
 
 def shell_loop(*args, **kwargs):
     try:
-        code = input(":: ").strip()
+        code = input(":: ").strip().upper()
 
         if not code: return 0
 
         cmd, *args = code.split(" ")
 
-        if is_assembly(cmd):
-            op = OP_TABLE[cmd]
-            args = list(map(int, args))
+        cmd = get_cmd(cmd)
 
-        else:
-            cmd = BIN(cmd, BITS, str)
-            op = OP_TABLE[cmd.int]
-            args = list(map((lambda x : BIN(x, BITS, str)), args))
+        args = map(get_arg, args)
 
-        print("cmd:", cmd, "\nargs:", args)
+        print(exec_cmd(cmd, args))
 
     except KeyboardInterrupt:
         return 1
