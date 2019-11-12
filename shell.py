@@ -1,18 +1,12 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
- __  __      __
-|__)|__) /\ |_ |\/| /\ |\ |
-|__)| \ /--\|  |  |/--\| \|
-
-     __ __ __     __
- /\ (_ (_ |_ |\/||__)| \_/
-/--\__)__)|__|  ||__)|__|
-
-
-          v1.0.0
-
-        08/11/2019
+  +-+-+-+-+-+-+-+
+  |B|R|A|F|M|A|N|
+ +-+-+-+-+-+-+-+-+
+ |A|S|S|E|M|B|L|Y|
+ +-+-+-+-+-+-+-+-+
+      v 1.1
 """
 import sys, os
 
@@ -23,8 +17,8 @@ from braf import *
 
 
 def get_value(code):
-    
-    
+
+
 def shell_loop(*args, **kwargs):
     try:
         code = input(":: ").strip()
@@ -32,11 +26,11 @@ def shell_loop(*args, **kwargs):
         if not code: return 0
 
         cmd, *args = code.split(" ")
-        
-        if is_assembly(cmd): 
+
+        if is_assembly(cmd):
             op = OP_TABLE[cmd]
             args = list(map(int, args))
-            
+
         else:
             cmd = BIN(cmd, BITS, str)
             op = OP_TABLE[cmd.int]
@@ -46,10 +40,10 @@ def shell_loop(*args, **kwargs):
 
     except KeyboardInterrupt:
         return 1
-        
+
     except Error as e:
         print(e)
-    
+
     return 0
 
 def shell(*args, **kwargs):
@@ -60,9 +54,9 @@ def shell(*args, **kwargs):
 
 def main(argc, argv):
     global BITS
-    
+
     print(__doc__)
-    
+
     if not shell(argc, argv):
         return 0
 
