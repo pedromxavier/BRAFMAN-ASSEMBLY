@@ -1,0 +1,2 @@
+SUB R0, R0, R0
+ADI R0, R1

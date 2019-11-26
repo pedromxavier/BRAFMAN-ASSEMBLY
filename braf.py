@@ -28,24 +28,52 @@ class Memory(list):
             msg = "No memory address {} [{}]".format(key,bin(key))
             raise Error(msg)
 
-class Reg(list):
+class Register(object):
 
-    def __init__(self, regs, bits):
-        list.__init__(self, [BIN(bits=bits) for _ in range(regs)])
+    REGS = REGS
+    BITS = BITS
 
+    __ref__ = {}
 
-    def __getitem__(self, key):
-        try:
-            list.__getitem__(self, key)
-        except IndexError:
-            msg = "No register in position {} [{}]".format(key,bin(key))
+    def __new__(cls, key):
+        if not 0 <= key < cls.REGS:
+            msg = "No register {}".format(key)
             raise Error(msg)
+        else:
+            if key not in cls.__ref__:
+                self = object.__new__(cls)
+                cls.__init__(self, key)
+                cls.__ref__[key] = self
+            return cls.__ref__[key]
+
+    def __init__(self, key):
+        self.key = key
+        self.val = random.randint(0, pow(2,self.BITS)-1)
+
+    def __repr__(self):
+        return "R{}".format(self.key)
+
+    def __lt__(A, X):
+        if type(X) is Register:
+            A.val = X.val
+        elif type(X) is int:
+            A.val = X
+
+    def __add__(A, B):
+        if type(B) is Register:
+            return A.val + B.val
+        elif type(B) is int:
+            return A.val + B
+
+    def __sub__(A, B):
+        if type(B) is Register:
+            return A.val - B.val
+        elif type(B) is int:
+            return A.val - B
 
 OP_TABLE = {}
 
 MEMORY = Memory(SIZE, BITS)
-
-REG = Reg(REGS, BITS)
 
 def cmd(f, at=None):
         """
@@ -90,50 +118,59 @@ def RRT():
 
 @cmd_at(0b010000)
 def ADD(A, B, C):
-    global REG
-    REG[A] = REG[B] + REG[C]
+    Register(A) < (Register(B) + Register(C))
 
 @cmd_at(0b010001)
 def ADI(A, B, C):
-    global REG
-    REG[A] = REG[B] + C
+    Register(A) < (Register(B) + C)
 
 @cmd_at(0b010010)
 def SUB(A, B, C):
-    global REG
-    REG[A] = REG[B] - REG[C]
+    Register(A) < (Register(B) - Register(C))
 
 @cmd_at(0b010011)
 def SBI(A, B, C):
-    global REG
-    REG[A] = REG[B] - C
+    Register(A) < (Register(B) - C)
 
 @cmd_at(0b010100)
 def AND(A, B, C):
-    global REG
-    REG[A] = REG[B] & REG[C]
+    Register(A) < (Register(B) & Register(C))
 
 @cmd_at(0b010101)
 def ANI(A, B, C):
-    global REG
-    REG[A] = REG[B] & C
+    Register(A) < (Register(B) & C)
 
 @cmd_at(0b010110)
 def OR(A, B, C):
-    global REG
-    REG[A] = REG[B] | REG[C]
+    Register(A) < (Register(B) | REG(C))
 
 @cmd_at(0b010111)
 def ORI(A, B, C):
-    global REG
-    REG[A] = REG[B] | C
+    Register(A) < (Register(B) | C)
 
 @cmd_at(0b011000)
 def XOR(A, B, C):
-    global REG
-    REG[A] = REG[B] ^ REG[C]
+    Register(A) < (Register(B) ^ Register(C))
 
 @cmd_at(0b011001)
 def XRI(A, B, C):
-    global REG
-    REG[A] = REG[B] ^ C
+    Register(A) < (Register(B) ^ C)
+
+class Compiler:
+
+    def __init__(self, table, *args, **kwargs):
+        self.table = table
+
+    def __call__(self, code):
+
+        res = []
+
+        for cmd, args in code:
+            if cmd not in self.table:
+                raise SyntaxError('Unkown {}'.format(cmd))
+            else:
+                res.append(self.table[cmd], args)
+
+        return res
+
+compiler = Compiler(OP_TABLE)
