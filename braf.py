@@ -41,9 +41,6 @@ class Reg(list):
             msg = "No register in position {} [{}]".format(key,bin(key))
             raise Error(msg)
 
-
-
-
 OP_TABLE = {}
 
 MEMORY = Memory(SIZE, BITS)

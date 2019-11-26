@@ -9,6 +9,7 @@
       v 1.1
 """
 import sys, os
+import string
 
 argv = sys.argv
 argc = len(argv)
@@ -16,9 +17,14 @@ argc = len(argv)
 from braf import *
 
 def get_cmd(cmd):
-    if cmd.endswith("H"):
+    if cmd.endswith("H") and all(x in '01' for x in cmd[:-1]):
         cmd_key = int(cmd[:-1], 16)
-    if
+
+    elif all(x in '01' for x in cmd):
+        cmd_key = int(cmd, 2)
+
+    else:
+        cmd_key = cmd
 
     if cmd_key not in OP_TABLE:
         raise NameError("Invalid OP {}".format(cmd))
@@ -26,7 +32,17 @@ def get_cmd(cmd):
         return OP_TABLE[cmd_key]
 
 def get_arg(arg):
-    ...
+    if cmd.beginswith("R") and all(x in string.digits for x in cmd[1:]):
+        return int(arg[1:])
+
+    if cmd.endswith("H") and all(x in '01' for x in cmd[:-1]):
+        return int(arg[:-1], 16)
+
+    elif all(x in '01' for x in cmd):
+        return int(arg, 2)
+
+    else:
+        return int(arg)
 
 def exec_cmd(op, args):
     return op(*args)
@@ -64,8 +80,11 @@ def main(argc, argv):
 
     print(__doc__)
 
-    if not shell(argc, argv):
-        return 0
+    if argc == 1:
+        if not shell(argc, argv):
+            return 0
+    elif argc == 2:
+        ...
 
 if __name__ == '__main__':
     main(argc, argv)
