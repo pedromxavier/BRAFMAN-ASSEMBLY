@@ -11,4 +11,4 @@ else:
     with open(argv[1], 'r') as file:
         source = file.read()
         parser.parser.parse(source)
-    sys.exit(0)
+    ##sys.exit(0)

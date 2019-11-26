@@ -30,13 +30,15 @@ class Memory(list):
 
 class Register(object):
 
-    REGS = REGS
-    BITS = BITS
+    REGS = REGS;
+    BITS = BITS;
+
+    PC = -1;
 
     __ref__ = {}
 
     def __new__(cls, key):
-        if not 0 <= key < cls.REGS:
+        if (not 0 <= key < cls.REGS) and (key != -1):
             msg = "No register {}".format(key)
             raise Error(msg)
         else:
@@ -70,6 +72,8 @@ class Register(object):
             return A.val - B.val
         elif type(B) is int:
             return A.val - B
+
+Register(Register.PC) < 0
 
 OP_TABLE = {}
 
@@ -145,16 +149,21 @@ def OR(A, B, C):
     Register(A) < (Register(B) | REG(C))
 
 @cmd_at(0b010111)
-def ORI(A, B, C):
-    Register(A) < (Register(B) | C)
+def ORI(RA, RB, C):
+    Register(RA) < (Register(RB) | C)
 
 @cmd_at(0b011000)
-def XOR(A, B, C):
-    Register(A) < (Register(B) ^ Register(C))
+def XOR(RA, RB, RC):
+    Register(RA) < (Register(RB) ^ Register(RC))
 
 @cmd_at(0b011001)
-def XRI(A, B, C):
-    Register(A) < (Register(B) ^ C)
+def XRI(RA, RB, C):
+    Register(RA) < (Register(RB) ^ C)
+
+@cmd_at(0b100011)
+def STW(RA, D_RB):
+    D, RB = D_RB
+    pass
 
 class Compiler:
 
@@ -162,15 +171,17 @@ class Compiler:
         self.table = table
 
     def __call__(self, code):
-
         res = []
-
         for cmd, args in code:
             if cmd not in self.table:
-                raise SyntaxError('Unkown {}'.format(cmd))
+                print('Unkown {}'.format(cmd))
+                raise SyntaxError()
             else:
-                res.append(self.table[cmd], args)
-
+                res.append((self.table[cmd], args))
         return res
 
 compiler = Compiler(OP_TABLE)
+
+def run(code, compiler):
+    for cmd, args in compiler(code):
+        cmd(*args)

@@ -26,7 +26,7 @@ def p_start(p):
               |
     """
     if len(p) == 2:
-        compiler
+        print(compiler(p[1]))
 
 def p_code(p):
     """ code : code stmt
