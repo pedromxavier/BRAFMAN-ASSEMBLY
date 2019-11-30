@@ -13,71 +13,96 @@ argv = sys.argv
 argc = len(argv)
 
 SIZE = 32
-BITS = 32
+BYTES = 4
 REGS = 32
 
-class Memory(list):
+class _Memory(list):
 
-    def __init__(self, size, bits):
-        list.__init__(self, [BIN(bits=bits) for _ in range(size)])
+    SIZE = SIZE;
+    BITS = 8 * BYTES;
 
-    def __getitem__(self, key):
-        try:
-            list.__getitem__(self, key)
-        except IndexError:
-            msg = "No memory address {} [{}]".format(key,bin(key))
-            raise Error(msg)
+    __ref__ = None
 
-class Register(object):
+    def __new__(cls):
+        if cls.__ref__ is None:
+            self = list.__new__(cls)
+            cls.__init__(self)
+            cls.__ref__ = self
+        return cls.__ref__
+
+    def __init__(self):
+        list.__init__(self, [BIN(bits=self.BITS) for _ in range(self.SIZE)])
+
+    def __setitem__(self, key_bytes, val):
+        key, bytes = key_bytes
+
+class _Register[list):
 
     REGS = REGS;
-    BITS = BITS;
+    BITS = 8 * BYTES;
 
-    PC = -1;
+    __ref__ = None
 
-    __ref__ = {}
+    def __new__(cls):
+        if cls.__ref__ is None:
+            self = list.__new__(cls)
+            cls.__init__(self)
+            cls.__ref__ = self
+        return cls.__ref__
 
-    def __new__(cls, key):
-        if (not 0 <= key < cls.REGS) and (key != -1):
+    def __init__(self):
+        list.__init__(self, [BIN(bits=self.BITS) for _ in range(self.REGS)])
+        self.PC = BIN(bits=self.BITS)
+
+    def __getitem__(self, key):
+        if key == None:
+            return self.PC
+        elif (not 0 <= key < cls.REGS):
             msg = "No register {}".format(key)
             raise Error(msg)
         else:
-            if key not in cls.__ref__:
-                self = object.__new__(cls)
-                cls.__init__(self, key)
-                cls.__ref__[key] = self
-            return cls.__ref__[key]
+            return list.__getitem__(self, key)
+
+    def __setitem__(self, key, val):
+        if key == None:
+            self.PC = val
+        elif (not 0 <= key < cls.REGS):
+            msg = "No register {}".format(key)
+            raise Error(msg)
+        else:
+            return list.__setitem__(self, key, val)
 
     def __init__(self, key):
         self.key = key
-        self.val = random.randint(0, pow(2,self.BITS)-1)
+        self.bin = BIN(bits=self.BITS)
 
     def __repr__(self):
         return "R{}".format(self.key)
 
     def __lt__(A, X):
         if type(X) is Register:
-            A.val = X.val
+            A.bin = X.bin
         elif type(X) is int:
-            A.val = X
+            A.bin = X
 
     def __add__(A, B):
         if type(B) is Register:
-            return A.val + B.val
+            return A.bin + B.bin
         elif type(B) is int:
-            return A.val + B
+            return A.bin + B
 
     def __sub__(A, B):
         if type(B) is Register:
-            return A.val - B.val
+            return A.bin - B.bin
         elif type(B) is int:
-            return A.val - B
+            return A.bin - B
 
-Register(Register.PC) < 0
+Register = _Register()
+Register.PC < 0x000000;
+
+Memory = _Memory()
 
 OP_TABLE = {}
-
-MEMORY = Memory(SIZE, BITS)
 
 def cmd(f, at=None):
         """
@@ -101,69 +126,68 @@ def NOP():
     pass
 
 @cmd_at(0b000010)
-def NOT():
-    pass
+def NOT(RA, RB):
+    Register[RA] = ~Register[RB]
 
 @cmd_at(0b000100)
-def LSH():
-    pass
+def LSH(RA, RB):
+    Resgiter[RA] = Register[RB] << 0
 
 @cmd_at(0b000110)
-def RSH():
-    pass
+def RSH(RA, RB):
+    Resgiter[RA] = Register[RB] >> 0
 
 @cmd_at(0b001000)
-def LRT():
-    pass
+def LRT(RA, RB):
+    Resgiter[RA] = Register[RB] << 1
 
 @cmd_at(0b001010)
-def RRT():
-    pass
+def RRT(RA, RB):
+    Resgiter[RA] = Register[RB] >> 1
 
 @cmd_at(0b010000)
-def ADD(A, B, C):
-    Register(A) < (Register(B) + Register(C))
+def ADD(RA, RB, RC):
+    Register[A] = Register[B] + Register[C]
 
 @cmd_at(0b010001)
-def ADI(A, B, C):
-    Register(A) < (Register(B) + C)
+def ADI(RA, RB, RC):
+    Register[A] = Register[B] + C
 
 @cmd_at(0b010010)
-def SUB(A, B, C):
-    Register(A) < (Register(B) - Register(C))
+def SUB(RA, RB, RC):
+    Register[A] = Register[B] - Register[C]
 
 @cmd_at(0b010011)
-def SBI(A, B, C):
-    Register(A) < (Register(B) - C)
+def SBI(RA, RB, RC):
+    Register[A] = Register[B] - C
 
 @cmd_at(0b010100)
-def AND(A, B, C):
-    Register(A) < (Register(B) & Register(C))
+def AND(RA, RB, RC):
+    Register[A] = Register[B] & Register[C]
 
 @cmd_at(0b010101)
-def ANI(A, B, C):
-    Register(A) < (Register(B) & C)
+def ANI(RA, RB, RC):
+    Register[A] = Register[B] & C
 
 @cmd_at(0b010110)
-def OR(A, B, C):
-    Register(A) < (Register(B) | REG(C))
+def OR(RA, RB, RC):
+    Register[A] = Register[B] | Register[C]
 
 @cmd_at(0b010111)
 def ORI(RA, RB, C):
-    Register(RA) < (Register(RB) | C)
+    Register[RA] = Register[RB] | C
 
 @cmd_at(0b011000)
 def XOR(RA, RB, RC):
-    Register(RA) < (Register(RB) ^ Register(RC))
+    Register[RA] = Register[RB] ^ Register[RC]
 
 @cmd_at(0b011001)
 def XRI(RA, RB, C):
-    Register(RA) < (Register(RB) ^ C)
+    Register[RA] = Register[RB] ^ C
 
 @cmd_at(0b100011)
 def STW(RA, D_RB):
     D, RB = D_RB
-    pass
 
 class Compiler:
 
@@ -174,7 +198,7 @@ class Compiler:
         res = []
         for cmd, args in code:
             if cmd not in self.table:
-                print('Unkown {}'.format(cmd))
+                print('SyntaxError: Unkown {}'.format(cmd))
                 raise SyntaxError()
             else:
                 res.append((self.table[cmd], args))

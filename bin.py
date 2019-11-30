@@ -111,17 +111,27 @@ class BIN(list):
 
         return BIN(buffer, a.bits, dtype=BIN, **flags)
 
-    def __lshift__(a, _):
-        buffer = [False] + [a[i] for i in range(0, a.bits-1)]
+    def __lshift__(a, x):
+        if x == 0:
+            buffer = [False] + [a[i] for i in range(0, a.bits-1)]
 
-        flags = {
-            'c' : a[-1],
-            'v' : False,
-        }
+            flags = {
+                'c' : a[-1],
+                'v' : False,
+            }
 
-        return BIN(buffer, a.bits, dtype=BIN, **flags)
+            return BIN(buffer, a.bits, dtype=BIN, **flags)
+        else:
+            buffer = [a[-1]] + [a[i] for i in range(0, a.bits-1)]
 
-    def __rshift__(a, _):
+            flags = {
+                'c' : a[-1],
+                'v' : False,
+            }
+
+            return BIN(buffer, a.bits, dtype=BIN, **flags)
+
+    def __rshift__(a, x):
         buffer = [a[i] for i in range(1, a.bits)] + [a[-1]]
 
         flags = {
