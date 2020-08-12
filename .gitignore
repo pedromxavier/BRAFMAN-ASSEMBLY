@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+# Parser output
+parsetab.py
+parser.out
+
 # Distribution / packaging
 .Python
 build/
