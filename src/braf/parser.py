@@ -1,15 +1,13 @@
-from braf import compiler
-from lexer import *;
-
-import ply.yacc as yacc;
+#pylint: disable=unused-wildcard-import
+from .lexer import *
+from ply import yacc
 
 precedence = (
+    ('left', 'DEC'),
     ('left', 'HEX_A'),
     ('left', 'HEX_B'),
-    ('left', 'DEC'),
     ('left', 'BIN_A'),
     ('left', 'BIN_B'),
-
     ('left', 'REG'),
 
     ('left', 'LPAR'),
@@ -26,20 +24,19 @@ def p_start(p):
               |
     """
     if len(p) == 2:
-        print(compiler(p[1]))
+        print(p[1])
 
 def p_code(p):
-    """ code : code stmt
+    """ code : code stmt NEWLINE
              | stmt
     """
-    if len(p) == 3:
+    if len(p) == 4:
         p[0] = [*p[1], p[2]]
     else:
         p[0] = [ p[1],]
 
 def p_stmt(p):
-    """ stmt : CMD args NEWLINE
-             | CMD args
+    """ stmt : CMD args
     """
     p[0] = (p[1], p[2])
 
@@ -76,3 +73,6 @@ def p_error(p):
     print('YaccError: {}'.format(p))
 
 parser = yacc.yacc()
+
+def parse(s: str):
+    return parser.parse(s)

@@ -1,4 +1,4 @@
-from braf import Register
+from .types import Register
 from ply import lex
 
 tokens = [
@@ -54,7 +54,7 @@ def t_BIN_B(t):
 
 def t_REG(t):
     r'[rR][0-9]+'
-    t.value = Register[int(t.value[1:], 10))
+    t.value = Register(int(t.value[1:], 10))
     return t
 
 def t_CMD(t):
