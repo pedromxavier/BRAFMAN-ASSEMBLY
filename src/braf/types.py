@@ -2,11 +2,26 @@ class bitarray(object):
 
     twos_comp = False
 
-    def __init__(self, bits: int, **flags):
+    def __init__(self, bits: int, buffer=None, dtype=None, **flags):
         self.bits = bits
-        self._array = [False] * bits
-
+        
         self._flags = {**flags}
+        self._dtype = int if dtype is None else dtype
+
+        self._array = self._from_buffer(buffer, self.bits, self._dtype)
+
+    @classmethod
+    def _from_buffer(cls, buffer: object, bits: int, dtype: type):
+        assert type(buffer) is dtype or buffer is None
+        if dtype is int:
+            if buffer is None:
+                return [False] * bits
+            else:
+                if buffer < 0:
+                    
+                return []
+                
+
 
     def __getitem__(self, i: int):
         assert type(i) is int and 1 <= i <= self.bits
@@ -66,6 +81,15 @@ class bitarray(object):
         res._flags['C'] = carry[i + 1] ## carry
         res._flags['O'] = carry[i + 1] ^ carry[i] ## overflow
         return res
+
+    def __sub__(self, other):
+        return self + (~other + type(other)(other.bits, buffer=1))
+
+    def __mul__(self, other):
+        res = type(self)(self.bits + other.bits)
+        for i in range(self.bits):
+            for j in range(other.bits):
+                self._array[i] and other._array[j]
 
     @classmethod
     def set_twos_comp(cls, active: bool):
